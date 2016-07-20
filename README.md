@@ -29,13 +29,15 @@ Initial Classification of 727 photos collected from the SCFace db and the Chicag
 
 [InitResults]: https://github.com/cjl2183/FilterAgeChange/img/InitResults.png "Initial Results"
 
+It's very likely that the training examples are skewing the data since youth is in high demand for the entertainment industry. Additionally it's practically a job requirement for actors to enhance themselves cosmetically. Thus, training a model to detect ages from actors' faces yields suboptimal results for the average person.
+
 # Neural Network Training
-Due to the less than optimal performance, I opted to train the neural network to reduce bias for ages classes 22, 24, and 28 and thus better predict ages in general.
+Due to the less than optimal performance, I opted to train the neural network to reduce bias for ages classes 22, 24, and 28 and  better predict ages in general.
 
 ## Processing Pipeline
-- I used Python's [dlib](http://dlib.net/python/) library to identify the facial features.
+- Python's [dlib](http://dlib.net/python/) library was used to identify the facial features with (x,y) coordinates.
 - A rectangular boundary enclosing the face was used to crop the image with a 20% margin remaining around the face.
-- Each image was horizontally tranposed and saved to double the sample size while still adding information.
+- Each image was flipped left-to-right and saved. This doubled the sample size while still adding information (since faces are not exactly symmetrical).
 - Using [SciPy miscellaneous methods](http://docs.scipy.org/doc/scipy/reference/misc.html), images were then converted to 4-dimensional numpy arrays, resized, and rearranged from RGB to GRB color-channels
 
 ## Retraining
@@ -51,14 +53,17 @@ The Keras model was compiled with the following options.
 - *Metrics*: Accuracy - For classification, this is the only one available in Keras.
 - *Dropout*: 0.5 - 50% of the values are randomly dropped from the layer to prevent overfitting.
 
-The following hyperparameters also tuned: 
+The following parameters also tuned: 
 - Batch Size: 32 - The maximum size (constrained by the memory of the server).
-- Epochs: 50 - Defines the number of times each sample is seen during training. This was the limit given time constraints.
+- Epochs: 50 - Defines the number of times each sample is seen during training. This was the limit for hyperparameter search given time constraints.
 
-The model was trained on 727x2 images with one-fold validation of 10%, leaving 10% for out-of-sample results below.
+The model was trained on 727x2 images with the following splits
+- 80% training
+- 10% validation
+- 10% testing
 
 ## Results
-The accuracy of predicting ages was vastly improved to 52% accuracy.
+The accuracy of predicting ages was vastly improved to 52% accuracy with a 144 sample holdout (10% of the total dataset).
 
 [TrainingResults]: https://github.com/cjl2183/FilterAgeChange/img/TrainingResults.png "Training Results"
 
@@ -69,15 +74,15 @@ The difficulty of the parameter searching for neural networks has produced creat
 # Predicting Ages of Filtered Photos
 Finally the following filters could be examined for their effect on the ages predicted by a model trained on unfiltered images. The following filters were used with a code snippet showing how the image is modified (note: these filters have since been deprecated in Instagram as of July, 2015):
 
-- *Gotham*
+- **Gotham**
 ```python
 self.execute("convert {filename} -modulate 120,10,100 -fill '#222b6d' -colorize 20 -gamma 0.5 -contrast -contrast {filename}")
 ```
-- *Kelvin*
+- **Kelvin**
 ```python
 self.execute("convert \( {filename} -auto-gamma -modulate 120,50,100 \) \( -size {width}x{height} -fill 'rgba(255,153,0,0.5)' -draw 'rectangle 0,0 {width},{height}' \) -compose multiply {filename}");
 ```
-- *Lomo*
+- **Lomo**
 ```python
 self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {filename}")
 ```
@@ -85,5 +90,11 @@ self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {fi
 
 The results are shown below with the histogram of ages from the original photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos. It appears that the *Gotham* filter shifted the histogram to the right, thereby "aging" the photos slightly. *Lomo* has a tendency to push ages into specific groups and redistribute from older age groups, thus reducing predicted ages overall. *Kelvin* has a mixed effect of pushing ages out of certain bins and spiking the histogram for certain classes. 
 
+[Filter Ages]: https://github.com/cjl2183/FilterAgeChange/img/FilterAges.png "FilterAges"
+
 # Conclusion
 A clear outcome is that filters change the prediction of the model. An alternative approach could be to dive below the "filters" and see how the raw modifications affect age detection. For instance, by changing the "gamma" paramter, it shifts age distribution by x. By changing the red channel x%, the age distribution shifted by x. Then a heatmap of attributes to age modification could be created.
+
+Ultimately a neural network could be trained to negate the effects from filters given enough observations. 
+
+The possibilities are endless.
