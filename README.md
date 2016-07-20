@@ -21,7 +21,7 @@ Application and Assessment in Forensic Scenarios, Forensic Science International
 # Pre-Trained Model
 The pre-trained model I chose was the winner of the ChaLearn LAP 2015 Challenge winner, "DEX", a convolutional neural network designed in the VGG16 architecture. It was trained on 500K+ facial images with ages from IMDB and Wikipedia. The inputs to the model are JPEG images and outputs are probabilities for 101 classes corresponding to ages 0-100. I converted the model from Caffe to Keras and ran it on an AWS instance from AMI ID: ami-125b2c72 maintained by Stanford's [CS231N Class](http://cs231n.github.io/aws-tutorial/). It's a g2.2xlarge, CUDA 7.5 and CuDNN v3 enabled instance which comes preinstalled with Caffe, Torch7, Theano, Keras and Lasagne. Python wrappers for Caffe are also installed.
 
-![DEx](https://github.com/cjl2183/FilterAgeChange/tree/master/img/DEx_Img.png "DEx Architecture")
+![DEx](/tree/master/img/DEx_Img.png?raw=true "DEx Architecture")
 
 Due to incompatibility issues between the Keras version the conversion script was designed for and the new Keras version, the model architecture had to be re-specified. Once the model architecture was defined in Keras, the original weights were loaded from an .h5 file for the predict method.
 
