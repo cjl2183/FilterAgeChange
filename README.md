@@ -21,13 +21,13 @@ Application and Assessment in Forensic Scenarios, Forensic Science International
 # Pre-Trained Model
 The pre-trained model I chose was the winner of the ChaLearn LAP 2015 Challenge winner, "DEX", a convolutional neural network designed in the VGG16 architecture. It was trained on 500K+ facial images with ages from IMDB and Wikipedia. The inputs to the model are JPEG images and outputs are probabilities for 101 classes corresponding to ages 0-100. I converted the model from Caffe to Keras and ran it on an AWS instance from AMI ID: ami-125b2c72 maintained by Stanford's [CS231N Class](http://cs231n.github.io/aws-tutorial/). It's a g2.2xlarge, CUDA 7.5 and CuDNN v3 enabled instance which comes preinstalled with Caffe, Torch7, Theano, Keras and Lasagne. Python wrappers for Caffe are also installed.
 
-[DEx]: https://github.com/cjl2183/FilterAgeChange/img/DEx_Img.png "DEx Architecture"
+[DEx]: https://github.com/cjl2183/FilterAgeChange/tree/master/img/DEx_Img.png "DEx Architecture"
 
 Due to incompatibility issues between the Keras version the conversion script was designed for and the new Keras version, the model architecture had to be re-specified. Once the model architecture was defined in Keras, the original weights were loaded from an .h5 file for the predict method.
 
 Initial Classification of 727 photos collected from the SCFace db and the Chicago Face DB resulted in 10% accuracy in correctly identifying the age (identified as the rounded down age integer).
 
-[InitResults]: https://github.com/cjl2183/FilterAgeChange/img/InitResults.png "Initial Results"
+[InitResults]: https://github.com/cjl2183/FilterAgeChange/tree/master/img/InitResults.png "Initial Results"
 
 It's very likely that the training examples are skewing the data since youth is in high demand for the entertainment industry. Additionally it's practically a job requirement for actors to enhance themselves cosmetically. Thus, training a model to detect ages from actors' faces yields suboptimal results for the average person.
 
@@ -65,7 +65,7 @@ The model was trained on 727x2 images with the following splits
 ## Results
 The accuracy of predicting ages was vastly improved to 52% accuracy with a 144 sample holdout (10% of the total dataset).
 
-[TrainingResults]: https://github.com/cjl2183/FilterAgeChange/img/TrainingResults.png "Training Results"
+[TrainingResults]: https://github.com/cjl2183/FilterAgeChange/tree/master/img/TrainingResults.png "Training Results"
 
 Due to time constraints the epochs was set to 50, which wasn't enough for the validation accuracy to converge given the options above. However with more epochs, the accuracy could easily be improved beyond 52%. 
 
@@ -90,7 +90,7 @@ self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {fi
 
 The results are shown below with the histogram of ages from the original photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos. It appears that the *Gotham* filter shifted the histogram to the right, thereby "aging" the photos slightly. *Lomo* has a tendency to push ages into specific groups and redistribute from older age groups, thus reducing predicted ages overall. *Kelvin* has a mixed effect of pushing ages out of certain bins and spiking the histogram for certain classes. 
 
-[Filter Ages]: https://github.com/cjl2183/FilterAgeChange/img/FilterAges.png "FilterAges"
+[Filter Ages]: https://github.com/cjl2183/FilterAgeChange/tree/master/img/FilterAges.png "FilterAges"
 
 # Conclusion
 A clear outcome is that filters change the prediction of the model. An alternative approach could be to dive below the "filters" and see how the raw modifications affect age detection. For instance, by changing the "gamma" paramter, it shifts age distribution by x. By changing the red channel x%, the age distribution shifted by x. Then a heatmap of attributes to age modification could be created.
