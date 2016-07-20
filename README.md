@@ -1,7 +1,7 @@
 # Background
 The objective of this project is to quantify the marginal effect of filters on age prediction of full-frontal facial images. Filters are used commonly within applications ([Instagram](https://www.instagram.com), [Camera+](http://campl.us/), etc.) and modify the original image by playing with various photographic features: gamma modulation, saturation, RGB contrast, etc. I aim to use a pre-trained model for age detection of unfiltered photos to measure the bias of modified images on ages.
 
-The project focus is a Convolutional VGG16 Neural Network.
+The project was focused on a Convolutional VGG16 Neural Network over a time span of 2+ weeks.
 
 This project has leveraged various libraries and datasets including: 
 - [DEX: Deep EXpectation of apparent age from a single image](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/) - a pretrained age detection neural network
@@ -19,19 +19,71 @@ This project has leveraged various libraries and datasets including:
 Application and Assessment in Forensic Scenarios, Forensic Science International, Vol. 233, No. 1, pp. 75-83, 2013
 
 # Pre-Trained Model
-The pre-trained model I chose was the winner of the ChaLearn LAP 2015 Challenge winner, "DEX", a convolutional neural network designed in the VGG16 architecture. It was trained on 500K+ facial images with ages from IMDB and Wikipedia. The inputs to the model are JPEG images and outputs are probabilities for 101 classes corresponding to ages 0-100. 
+The pre-trained model I chose was the winner of the ChaLearn LAP 2015 Challenge winner, "DEX", a convolutional neural network designed in the VGG16 architecture. It was trained on 500K+ facial images with ages from IMDB and Wikipedia. The inputs to the model are JPEG images and outputs are probabilities for 101 classes corresponding to ages 0-100. I converted the model from Caffe to Keras and ran it on an AWS instance from AMI ID: ami-125b2c72 maintained by Stanford's [CS231N Class](http://cs231n.github.io/aws-tutorial/). It's a g2.2xlarge, CUDA 7.5 and CuDNN v3 enabled instance which comes preinstalled with Caffe, Torch7, Theano, Keras and Lasagne. Python wrappers for Caffe are also installed.
 
 [DEx]: https://github.com/cjl2183/FilterAgeChange/img/DEx_Img.png "DEx Architecture"
 
-Initial Classification of 727 photos from the SCFace db and the Chicago Face DB resulted in 10% accuracy in correctly identifying the truncated age (as an integer).
+Due to incompatibility issues between the Keras version the conversion script was designed for and the new Keras version, the model architecture had to be re-specified. Once the model architecture was defined in Keras, the original weights were loaded from an .h5 file for the predict method.
+
+Initial Classification of 727 photos collected from the SCFace db and the Chicago Face DB resulted in 10% accuracy in correctly identifying the age (identified as the rounded down age integer).
 
 [InitResults]: https://github.com/cjl2183/FilterAgeChange/img/InitResults.png "Initial Results"
 
 # Neural Network Training
-Due to the poor performance, I opted to train the neural network to reduce bias for ages classes 22, 24, and 28 and better predict ages in general.
+Due to the less than optimal performance, I opted to train the neural network to reduce bias for ages classes 22, 24, and 28 and thus better predict ages in general.
 
-# Processing Pipeline
+## Processing Pipeline
+- I used Python's [dlib](http://dlib.net/python/) library to identify the facial features.
+- A rectangular boundary enclosing the face was used to crop the image with a 20% margin remaining around the face.
+- Each image was horizontally tranposed and saved to double the sample size while still adding information.
+- Using [SciPy miscellaneous methods](http://docs.scipy.org/doc/scipy/reference/misc.html), images were then converted to 4-dimensional numpy arrays, resized, and rearranged from RGB to GRB color-channels
 
-# Results
+## Retraining
+Ages with decimal precision were included in the photo collections for each image subject. Then for each image, the neural network was trained to target a class representing the subject's age integer floor. 
+
+The Keras model was compiled with the following options. 
+- *Optimizer*: Stochastic Gradient Descent - The final layer of the neural network outputs probabilities for each age class via a softmax function, which can be turned into a negative log-likelihood loss functon by taking the logarithm of the output. This differentiation results in a convex equation that can be optimized via SGD. "Adam" is also a recommended loss function option to SGD+Nesterov available in Keras.
+- *Learning Rate*: 0.001 -  The value that gave the best performance within the time constraint. This is the value prior to decay.
+- *Decay*: 1e-6 - The amount to reduce the learning rate with every update
+- *Momentum*: 0.9 - This is the typical value used for better convergence. It builds velocity in the direction with consistent gradients. 
+- *Nesterov*: True - This calculates the "lookahead" gradient (the gradient of the future step).
+- *Loss*: Categorical Cross-entropy - since the outputs are probabilities for 101 classes, this measures loss with a multi-class log-loss function. 
+- *Metrics*: Accuracy - For classification, this is the only one available in Keras.
+- *Dropout*: 0.5 - 50% of the values are randomly dropped from the layer to prevent overfitting.
+
+The following hyperparameters also tuned: 
+- Batch Size: 32 - The maximum size (constrained by the memory of the server).
+- Epochs: 50 - Defines the number of times each sample is seen during training. This was the limit given time constraints.
+
+The model was trained on 727x2 images with one-fold validation of 10%, leaving 10% for out-of-sample results below.
+
+## Results
+The accuracy of predicting ages was vastly improved to 52% accuracy.
+
+[TrainingResults]: https://github.com/cjl2183/FilterAgeChange/img/TrainingResults.png "Training Results"
+
+Due to time constraints the epochs was set to 50, which wasn't enough for the validation accuracy to converge given the options above. However with more epochs, the accuracy could easily be improved beyond 52%. 
+
+The difficulty of the parameter searching for neural networks has produced creative ways to shortcut the search - creating ensemble models from different "checkpoints", saving a "moving average" model, or averaging outputs from models with random sets of hyperparameters could bridge the gap to a model with the "optimal" hyperparameters. 
+
+# Predicting Ages of Filtered Photos
+Finally the following filters could be examined for their effect on the ages predicted by a model trained on unfiltered images. The following filters were used with a code snippet showing how the image is modified (note: these filters have since been deprecated in Instagram as of July, 2015):
+
+- *Gotham*
+```python
+self.execute("convert {filename} -modulate 120,10,100 -fill '#222b6d' -colorize 20 -gamma 0.5 -contrast -contrast {filename}")
+```
+- *Kelvin*
+```python
+self.execute("convert \( {filename} -auto-gamma -modulate 120,50,100 \) \( -size {width}x{height} -fill 'rgba(255,153,0,0.5)' -draw 'rectangle 0,0 {width},{height}' \) -compose multiply {filename}");
+```
+- *Lomo*
+```python
+self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {filename}")
+```
+[Filters]: https://github.com/cjl2183/FilterAgeChange/img/Filters.png "Filters"
+
+The results are shown below with the histogram of ages from the original photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos. It appears that the *Gotham* filter shifted the histogram to the right, thereby "aging" the photos slightly. *Lomo* has a tendency to push ages into specific groups and redistribute from older age groups, thus reducing predicted ages overall. *Kelvin* has a mixed effect of pushing ages out of certain bins and spiking the histogram for certain classes. 
 
 # Conclusion
+A clear outcome is that filters change the prediction of the model. An alternative approach could be to dive below the "filters" and see how the raw modifications affect age detection. For instance, by changing the "gamma" paramter, it shifts age distribution by x. By changing the red channel x%, the age distribution shifted by x. Then a heatmap of attributes to age modification could be created.
