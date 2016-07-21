@@ -4,8 +4,7 @@ The objective of this project is to quantify the effect that filters have on pre
 The project was focused on a Convolutional VGG16 Neural Network over a time span of 2+ weeks.
 
 This project has leveraged various libraries and datasets including: 
-- [DEX: Deep EXpectation of apparent age from a single image](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/) - a pretrained image-based age detection neural network
-Rasmus Rothe and Radu Timofte and Luc Van Gool. ChaLearn Looking at People workshop: DEX: Deep EXpectation of apparent age from a single image. International Conference on Computer Vision (ICCV). December 2015. Web. June 2016.
+- [DEX: Deep EXpectation of apparent age from a single image](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/) - Rasmus Rothe and Radu Timofte and Luc Van Gool. ChaLearn Looking at People workshop: DEX: Deep EXpectation of apparent age from a single image. International Conference on Computer Vision (ICCV). December 2015. Web. June 2016.
 - [Instragram Filters](https://github.com/acoomans/instagram-filters) - a Python library for replicas of Instagram filters
 - [CaffeToKeras Library](https://github.com/MarcBS/keras) - this repo includes tools for converting an implementation in the Caffe framework to Keras
 - [The Chicago Face Database](http://chicagofaces.org/) - Ma, Correll, & Wittenbrink (2015). The Chicago Face Database: A Free Stimulus Set of Faces and Norming Data. Behavior Research Methods, 47, 1122-1135.
@@ -60,7 +59,7 @@ The model was trained and evaluated with:
 - 10% testing
 
 ## Results
-The accuracy of predicting ages was vastly improved to 52% accuracy in the holdout sample.
+After retraining the accuracy of predicting ages was vastly improved to 52% accuracy in the holdout sample.
 
 ![TrainingResults](/img/TrainingResults.png "Training Results")
 
@@ -84,13 +83,16 @@ self.execute("convert \( {filename} -auto-gamma -modulate 120,50,100 \) \( -size
 self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {filename}")
 ```
 ![Filters](/img/Filters.png "Filters")
+*Courtesy of Chicago Face Database*
 
-The results are shown below with the histogram of ages from the original, unfiltered photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos. It appears that the **Gotham** filter shifted the histogram to the right, thereby "aging" the photos slightly. **Lomo** has a tendency to push ages into specific groups and redistribute from older age groups, thus reducing predicted ages overall. **Kelvin** has a mixed effect of pushing ages out of certain bins and spiking the histogram for certain classes. 
+The results are shown below with the histogram of ages from the original, unfiltered photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos.
 
 ![Filter Ages](/img/FilterAges.png "FilterAges")
 
+It appears that the **Gotham** filter shifted the histogram to the right, thereby "aging" the photos slightly. **Lomo** has a tendency to push ages into specific groups and redistribute from older age groups, thus reducing predicted ages overall. **Kelvin** has a mixed effect of pushing ages out of certain bins and spiking the histogram for certain classes. 
+
 # Conclusion
-It's clear that filters change the probabilities produced by the model for each age class. An alternative approach could be to dive below the "filters" and see how the raw modifications affect age detection. For instance, by changing the "gamma" paramter, it shifts age distribution by x. By changing the red channel x%, the age distribution shifted by x. Then a heatmap of the effects of attributes to age prediction could be created.
+It's clear that filters change the probabilities produced by the model for each age class. An alternative approach could be to dive below the "filters" and see how the raw modifications affect age detection. For instance, by changing the "gamma" parameter, it shifts age distribution by x. By changing the red channel x%, the age distribution shifted by x. Then a heatmap of the effects different attributes have on age prediction could be created.
 
 Ultimately a neural network could be trained to negate the effects from filters given enough observations. 
 
