@@ -83,6 +83,7 @@ self.execute("convert \( {filename} -auto-gamma -modulate 120,50,100 \) \( -size
 self.execute("convert {filename} -channel R -level 33% -channel G -level 33% {filename}")
 ```
 ![Filters](/img/Filters.png "Filters")
+
 *Courtesy of Chicago Face Database*
 
 The results are shown below with the histogram of ages from the original, unfiltered photos. This was converted into a kernel density estimation and overlayed onto the histogram of ages from the filtered photos.
